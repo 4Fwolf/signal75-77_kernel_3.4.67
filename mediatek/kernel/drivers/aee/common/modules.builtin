@@ -1,0 +1,3 @@
+kernel/mediatek/kernel/drivers/aee/common/aee-common.ko
+kernel/mediatek/kernel/drivers/aee/common/reboot-reason.ko
+kernel/mediatek/kernel/drivers/aee/common/wdt-handler.ko

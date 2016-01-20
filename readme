@@ -1,0 +1,9 @@
+git clone https://github.com/4Fwolf/signal75-77_kernel_3.4.67.git
+
+mv signal75-77_kernel_3.4.67 build_signal
+
+cd ~/build_signal
+
+./bld n signal75_kk
+or
+./bld n signal77_kk

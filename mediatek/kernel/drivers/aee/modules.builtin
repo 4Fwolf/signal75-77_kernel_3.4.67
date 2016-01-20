@@ -1,0 +1,6 @@
+kernel/mediatek/kernel/drivers/aee/aed/aed.ko
+kernel/mediatek/kernel/drivers/aee/common/aee-common.ko
+kernel/mediatek/kernel/drivers/aee/common/reboot-reason.ko
+kernel/mediatek/kernel/drivers/aee/common/wdt-handler.ko
+kernel/mediatek/kernel/drivers/aee/ipanic/ipanic.ko
+kernel/mediatek/kernel/drivers/aee/mrdump/mrdump_mini.ko

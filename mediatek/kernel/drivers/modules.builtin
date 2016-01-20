@@ -1,0 +1,16 @@
+kernel/mediatek/kernel/drivers/aee/aed/aed.ko
+kernel/mediatek/kernel/drivers/aee/common/aee-common.ko
+kernel/mediatek/kernel/drivers/aee/common/reboot-reason.ko
+kernel/mediatek/kernel/drivers/aee/common/wdt-handler.ko
+kernel/mediatek/kernel/drivers/aee/ipanic/ipanic.ko
+kernel/mediatek/kernel/drivers/aee/mrdump/mrdump_mini.ko
+kernel/mediatek/kernel/drivers/bthid/hid_keyboard.ko
+kernel/mediatek/kernel/drivers/ccci/ccci.ko
+kernel/mediatek/kernel/drivers/combo/drv_wlan/mt6620/wlan/wlan_mt6620.ko
+kernel/mediatek/kernel/drivers/fmradio/mtk_fm_drv.ko
+kernel/mediatek/kernel/drivers/gps/gps.ko
+kernel/mediatek/kernel/drivers/keypad/kpd.ko
+kernel/mediatek/kernel/drivers/leds/leds_drv.ko
+kernel/mediatek/kernel/drivers/uart/uart.ko
+kernel/mediatek/kernel/drivers/usb20/musb_hdrc.ko
+kernel/mediatek/kernel/drivers/wdk/wd_common_drv.ko

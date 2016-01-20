@@ -1,0 +1,3 @@
+#!/bin/bash
+scripts/boot_img_tools
+

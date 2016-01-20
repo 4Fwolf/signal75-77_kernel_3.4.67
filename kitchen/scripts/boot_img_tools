@@ -1,0 +1,3 @@
+#!/bin/bash
+scripts/prompt_build_boot
+scripts/build_boot_img  

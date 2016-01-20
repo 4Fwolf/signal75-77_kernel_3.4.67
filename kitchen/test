@@ -1,0 +1,10 @@
+#!/bin/bash
+cp -R ~/android/kitchen/41_boot ~/android/kitchen/BOOT-EXTRACTED
+sleep 5s
+cd ~/android/kitchen
+./menu
+sleep 10s
+
+echo "lool"
+cp -R ~/android/kitchen/WORKING_kernel/boot.img ~/android/boot.img
+sleep 5m

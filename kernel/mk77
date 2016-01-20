@@ -1,0 +1,428 @@
+#!/bin/bash
+# ================================Vars==================================
+curdir=`pwd`
+toolchaindir='../toolchain/arm-linux-androideabi-4.7/bin/arm-linux-androideabi-'
+mediatek='../mediatek'
+kitchen='../kitchen'
+outdir='../build_out'
+project='signal77_kk'
+initram='BOOT-EXTRACTED_kk'
+upddir='Update_kk'
+kernvers='[3.4.67]'
+drv='platform/mt6577/kernel/drivers/gpu'
+module='pvrsrvkm.ko'
+#========================================================================
+
+# ================================Exports==================================
+export ARCH=arm
+export KERNEL_DIR=`pwd`
+export PATH=/home/iicux/build/toolchain/arm-linux-androideabi-4.7/bin:$PATH
+export CROSS_COMPILE=arm-linux-androideabi-
+export PROJECT=signal77_kk
+export TARGET_PRODUCT=signal77_kk
+export MTK_ROOT_CUSTOM=../mediatek/custom/
+export MTK_PATH_SOURCE=../mediatek/kernel/
+export TARGET_BUILD_VARIANT=user
+export ARCH_MTK_PLATFORM=mt6577
+export MTK_PATH_PLATFORM=../mediatek/platform/mt6577/kernel/
+#========================================================================
+
+# ================================Usage==================================
+usage(){
+echo " "
+echo "======================================"
+echo "Usage: ./mk <x> <y>"
+echo " "
+echo "	<x>:=========="
+echo "		n    -new build"
+echo "		r    -rebuild"
+echo "	<y>:=========="
+echo "		k   -build kernel only"
+echo "		m   -build modules only"
+echo "		mm  -build modules with drv_list"
+echo "		bs  -build project"
+echo "		bm  -build project with drv_list"
+echo "======================================"
+echo "	[./mk c]    -clean source tree"
+echo "	[./mk p]    -pack boot.img"
+echo "======================================"
+echo " "
+}
+#========================================================================
+
+# ================================Pack==================================
+pack(){
+echo " "
+echo "=============================================================="
+echo "Packing kernel:"
+echo "=============================================================="
+echo " "
+echo " "
+echo " "
+
+echo "============Copiyng kernel:"
+cp -R "$kitchen"/"$initram" "$kitchen"/BOOT-EXTRACTED
+cp -R "$curdir"/arch/arm/boot/zImage "$kitchen"/BOOT-EXTRACTED/zImage
+
+echo " "
+echo "============Making boot.img:"
+cp -R "$kitchen"/boot.img "$kitchen"/WORKING_kernel/boot.img
+cd "$kitchen"
+./menu
+
+path="kernel-$kernvers-`date +%F_%H-%M`"
+
+echo " "
+echo "============Copiyng boot.img:"
+mkdir -p "$outdir"/"$path"
+cp -R "$kitchen"/WORKING_kernel/boot.img "$outdir"/"$path"/boot.img
+cp -R "$curdir"/arch/arm/boot/zImage "$outdir"/"$path"/zImage
+
+echo " "
+echo " "
+echo " "
+echo "=============================================================="
+echo "Packing done succesfully!"
+echo "=============================================================="
+echo " "
+}
+#========================================================================
+
+# ================================Clean==================================
+clean(){
+echo " "
+echo "=============================================================="
+echo "Cleaning build tree:"
+echo "=============================================================="
+echo " "
+make -j10 mrproper
+rm -R "$mediatek"/custom/out
+echo " "
+echo " "
+echo " "
+echo "=============================================================="
+echo "Cleaning done succesfully!"
+echo "=============================================================="
+echo " "
+}
+#========================================================================
+
+# ===========================Make simple build===========================
+mkbuild_simple(){
+echo " "
+echo "=============================================================="
+echo "Starting build project"
+echo "=============================================================="
+echo " "
+
+echo " "
+echo "============Building kernel:"
+make -j10
+
+echo " "
+echo "============Copiyng kernel:"
+cp -R "$kitchen"/"$initram" "$kitchen"/BOOT-EXTRACTED
+cp -R "$curdir"/arch/arm/boot/zImage "$kitchen"/BOOT-EXTRACTED/zImage
+
+echo " "
+echo "============Making boot.img:"
+cp -R "$kitchen"/boot.img "$kitchen"/WORKING_kernel/boot.img
+cd "$kitchen"
+./menu
+
+path="kernel-$kernvers-`date +%F_%H-%M`"
+
+echo " "
+echo "============Copiyng boot.img:"
+mkdir -p "$outdir"/"$path"/
+cp -R "$kitchen"/WORKING_kernel/boot.img "$outdir"/"$path"/boot.img
+cp -R "$curdir"/arch/arm/boot/zImage "$outdir"/"$path"/zImage
+
+echo " "
+echo " "
+echo " "
+echo "=============================================================="
+echo "Build done succesfully!"
+echo "=============================================================="
+echo " "
+}
+#========================================================================
+
+# ===========================Make only kernel============================
+mkkernel(){
+echo " "
+echo "=============================================================="
+echo "Starting build kernel"
+echo "=============================================================="
+echo " "
+
+echo " "
+echo "============Building:"
+make -j10 zImage | tee "$outdir"/log.txt
+
+echo " "
+echo "============Copiyng kernel:"
+cp -R "$kitchen"/"$initram" "$kitchen"/BOOT-EXTRACTED
+cp -R "$curdir"/arch/arm/boot/zImage "$kitchen"/BOOT-EXTRACTED/zImage
+
+echo " "
+echo "============Making boot.img:"
+cp -R "$kitchen"/boot.img "$kitchen"/WORKING_kernel/boot.img
+cd "$kitchen"
+./menu
+
+path="kernel_and_recovery-$kernvers-`date +%F_%H-%M`"
+
+echo " "
+echo "============Copiyng boot.img:"
+mkdir -p "$outdir"/"$path"
+touch "$outdir"/"$path"/info.txt
+mv -f "$outdir"/log.txt "$outdir"/"$path"/log.txt
+cp -R "$kitchen"/WORKING_kernel/boot.img "$outdir"/"$path"/boot.img
+cp -R "$curdir"/arch/arm/boot/zImage "$outdir"/"$path"/zImage
+
+echo " "
+echo "============Making recovery.img:"
+cp -R "$kitchen"/BOOT-EXTRACTED_rec "$kitchen"/BOOT-EXTRACTED
+cp -R "$curdir"/arch/arm/boot/zImage "$kitchen"/BOOT-EXTRACTED/zImage
+cp -R "$kitchen"/cwm.img "$kitchen"/WORKING_kernel/boot.img
+cd "$kitchen"
+./menu
+
+echo " "
+echo "============Copiyng recovery.img:"
+cp -R "$kitchen"/WORKING_kernel/boot.img "$outdir"/"$path"/recovery.img
+
+echo " "
+echo " "
+echo " "
+echo "=============================================================="
+echo "Build done succesfully!"
+echo "=============================================================="
+echo " "
+}
+#========================================================================
+
+# ===========================Make only modules===========================
+mkmodules(){
+echo " "
+echo "=============================================================="
+echo "Starting build modules"
+echo "=============================================================="
+echo " "
+
+echo " "
+echo "============Building:"
+make -j10 modules | tee "$outdir"/log.txt
+
+path="modules-$kernvers-`date +%F_%H-%M`"
+
+echo " "
+echo "============Copiyng modules:"
+mkdir -p "$outdir"/"$path"/orig
+mv -f "$outdir"/log.txt "$outdir"/"$path"/log.txt
+find "$curdir" -name "*.ko" -exec cp '{}' "$outdir"/"$path" \;
+find "$mediatek" -name "*.ko" -exec cp '{}' "$outdir"/"$path" \;
+find "$curdir" -name "*.ko" -exec cp '{}' "$outdir"/"$path"/orig \;
+find "$mediatek" -name "*.ko" -exec cp '{}' "$outdir"/"$path"/orig \;
+
+echo " "
+echo "============Striping modules:"
+"$toolchaindir"strip -g -S -d --strip-unneeded -x -I elf32-littlearm -O elf32-littlearm "$outdir"/"$path"/*.ko
+
+echo " "
+echo " "
+echo " "
+echo "=============================================================="
+echo "Build done succesfully!"
+echo "=============================================================="
+echo " "
+}
+#========================================================================
+
+# ===========================Make modules with drv_list===========================
+mkmodulesm(){
+LINE_NUMBER=1
+ENDING=$(grep -c $ drv_list)
+touch "$outdir"/size_modules.txt
+echo "size	module		driver" > "$outdir"/size_modules.txt
+for LINE_NUMBER in $(seq 1 $ENDING);
+do
+echo " "
+echo "=============================================================="
+echo "Starting build modules"
+echo "=============================================================="
+echo " "
+
+DRIVER_NAME=$(sed $LINE_NUMBER!d drv_list)
+echo " "
+echo "============Changing driver: $DRIVER_NAME"
+echo "Working on driver" $LINE_NUMBER "of" $ENDING "named" $DRIVER_NAME
+rm -R "$mediatek"/"$drv"
+cp -R ../"$DRIVER_NAME"/"$drv" "$mediatek"/"$drv"
+
+echo " "
+echo "============Building:"
+make -j10 modules | tee "$outdir"/log.txt
+
+path="modules-$kernvers-`date +%F_%H-%M`"
+
+echo " "
+echo "============Copiyng modules:"
+mkdir -p "$outdir"/"$path""(""$DRIVER_NAME"")"/orig
+mv -f "$outdir"/log.txt "$outdir"/"$path""(""$DRIVER_NAME"")"/log.txt
+find "$curdir" -name "*.ko" -exec cp '{}' "$outdir"/"$path""(""$DRIVER_NAME"")" \;
+find "$mediatek" -name "*.ko" -exec cp '{}' "$outdir"/"$path""(""$DRIVER_NAME"")" \;
+find "$curdir" -name "*.ko" -exec cp '{}' "$outdir"/"$path""(""$DRIVER_NAME"")"/orig \;
+find "$mediatek" -name "*.ko" -exec cp '{}' "$outdir"/"$path""(""$DRIVER_NAME"")"/orig \;
+
+echo " "
+echo "============Striping modules:"
+"$toolchaindir"strip -g -S -d --strip-unneeded -x -I elf32-littlearm -O elf32-littlearm "$outdir"/"$path""(""$DRIVER_NAME"")"/*.ko
+
+echo " "
+echo "============Checking size:"
+cd "$outdir"/"$path""(""$DRIVER_NAME"")"/
+sz=`du -b $module`
+sed -i "\$i$sz""	""$DRIVER_NAME" ../size_modules.txt
+
+#TODO for checking size with originals
+#cd "$outdir"/modules_original/
+#sz1=`du -b pvrsrvkm.ko`
+#echo "$sz"
+#echo "$sz1"
+#if [ "$sz" = "$sz1" ];then
+#echo "YES"
+#exit 0
+#exit 0
+#exit 0
+#else
+#echo "NO"
+#fi
+
+cd "$curdir"
+
+echo " "
+echo " "
+echo " "
+echo "=============================================================="
+echo "Build done succesfully!"
+echo "=============================================================="
+echo " "
+clean
+done
+}
+#========================================================================
+
+# ================================Flashing==================================
+flash(){
+echo " "
+echo "============Flashing boot:"
+adb push "$outdir"/boot.img /data/
+adb shell dd if=/data/boot.img of=/dev/bootimg
+adb reboot
+}
+#========================================================================
+
+# ================================Main==================================
+case "$1" in
+	n)
+		clean
+		case "$2" in
+			k)
+				start=`date +%H:%M:%S`
+				mkkernel
+				end=`date +%H:%M:%S`
+				echo "Start: $start"
+				echo "End: $end"
+			;;
+			m)
+				start=`date +%H:%M:%S`
+				mkmodules
+				end=`date +%H:%M:%S`
+				echo "Start: $start"
+				echo "End: $end"
+			;;
+			mm)
+				start=`date +%H:%M:%S`
+				mkmodulesm
+				end=`date +%H:%M:%S`
+				echo "Start: $start"
+				echo "End: $end"
+			;;
+			bs)
+				start=`date +%H:%M:%S`
+				mkbuild_simple
+				end=`date +%H:%M:%S`
+				echo "Start: $start"
+				echo "End: $end"
+#				flash
+			;;
+			bm)
+				start=`date +%H:%M:%S`
+				mkbuild_multi
+				end=`date +%H:%M:%S`
+				echo "Start: $start"
+				echo "End: $end"
+#				flash
+			;;
+			*)
+				usage
+			;;
+		esac
+	;;
+	r)
+		case "$2" in
+			k)
+				start=`date +%H:%M:%S`
+				mkkernel
+				end=`date +%H:%M:%S`
+				echo "Start: $start"
+				echo "End: $end"
+			;;
+			m)
+				start=`date +%H:%M:%S`
+				mkmodules
+				end=`date +%H:%M:%S`
+				echo "Start: $start"
+				echo "End: $end"
+			;;
+			mm)
+				start=`date +%H:%M:%S`
+				mkmodulesm
+				end=`date +%H:%M:%S`
+				echo "Start: $start"
+				echo "End: $end"
+			;;
+			bs)
+				start=`date +%H:%M:%S`
+				mkbuild_simple
+				end=`date +%H:%M:%S`
+				echo "Start: $start"
+				echo "End: $end"
+#				flash
+			;;
+			bm)
+				start=`date +%H:%M:%S`
+				mkbuild_multi
+				end=`date +%H:%M:%S`
+				echo "Start: $start"
+				echo "End: $end"
+#				flash
+			;; 
+			*)
+				usage
+			;;
+		esac
+	;;
+	c)
+		clean
+	;;
+	p)
+		pack
+	;;
+	*)
+		usage
+	;;	
+esac
+#========================================================================

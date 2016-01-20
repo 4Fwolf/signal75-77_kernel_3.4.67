@@ -1,0 +1,225 @@
+#!/bin/bash
+# ================================Vars==================================
+curdir=`pwd`
+mediatek='./mediatek'
+kitchen='./kitchen'
+outdir='./build_out'
+initram='BOOT-EXTRACTED_kk'
+kernvers='[3.4.67]'
+logs='./out/target/product'
+fl='1'
+#========================================================================
+
+# ================================Exports==================================
+#exp(){
+#export ARCH=arm
+#export KERNEL_DIR=`pwd`
+##export PATH=/home/iicux/build_75/toolchain/arm-linux-androideabi-4.7/bin:$PATH
+#export PATH=../toolchain/arm-linux-androideabi-4.7/bin:$PATH
+#export CROSS_COMPILE=arm-linux-androideabi-
+#export PROJECT="$project"
+#export TARGET_PRODUCT="$project"
+#export MTK_ROOT_CUSTOM=../mediatek/custom/
+#export MTK_PATH_SOURCE=../mediatek/kernel/
+#export TARGET_BUILD_VARIANT=user
+#export ARCH_MTK_PLATFORM="$plat"
+#export MTK_PATH_PLATFORM=../mediatek/platform/"$plat"/kernel/
+#}
+#========================================================================
+
+# ================================Usage==================================
+usage(){
+echo " "
+echo "======================================"
+echo "Usage: ./mk <flag> <project>"
+echo " "
+echo "	<flags>:=========="
+echo "		n    -new build"
+echo "		r    -rebuild"
+echo "		p    -pack boot.img"
+echo "		c    -clean"
+echo "		 	"
+echo "	Example: ./mk n signal75_kk"
+echo "======================================"
+echo "	[./mk f]    -flash boot.img"
+echo "======================================"
+echo " "
+}
+#========================================================================
+
+# ================================Pack==================================
+pack(){
+echo "`date +%Y/%m/%d` `date +%H:%M:%S` Packing..."
+fl='1'
+chk="$bldout"/zImage
+chk1="$kitchen"/"$initram"
+if [[ -e $chk ]]
+then
+if [[ -e $chk1 ]]
+then
+fl='0'
+cp -R "$kitchen"/"$initram" "$kitchen"/BOOT-EXTRACTED
+cp -R "$bldout"/zImage "$kitchen"/BOOT-EXTRACTED/zImage
+
+cp -R "$kitchen"/boot.img "$kitchen"/WORKING_kernel/boot.img
+
+plf=$project"_pack.log"
+touch $logs/$plf
+
+cd "$kitchen"
+./menu >& ../$logs/$plf
+cd ../
+
+path="[$project]kernel-$kernvers-`date +%F_%H-%M`"
+
+mkdir -p "$outdir"/"$path"
+cp -R "$kitchen"/WORKING_kernel/boot.img "$outdir"/"$path"/boot.img
+cp -R "$kitchen"/WORKING_kernel/boot.img "$outdir"/boot.img
+cp -R "$bldout"/zImage "$outdir"/"$path"/zImage
+echo "		    LOG: $logs/"$project"_pack.log"
+echo "		    ==> [OK]	`date +%Y/%m/%d` `date +%H:%M:%S`"
+fi
+fi
+if [[ $fl == "1" ]]
+then
+echo "		    LOG: $logs/"$project"_pack.log"
+echo "		    ==> [FAIL]	`date +%Y/%m/%d` `date +%H:%M:%S`"
+fi
+}
+#========================================================================
+
+# ================================Clean==================================
+clean(){
+./mk $project c k
+rm -Rf ./out
+rm -f "$outdir"/boot.img
+}
+#========================================================================
+
+# ===========================Make build===========================
+mkb(){
+prjd=$curdir/out/target/product/$project
+if [[ -e $prjd ]]
+then
+rm -Rf ./out
+fi
+./mk $project $bflg k
+}
+#========================================================================
+
+# ================================Flashing==================================
+flash(){
+echo "`date +%Y/%m/%d` `date +%H:%M:%S` Flashing..."
+sudo adb reboot recovery
+read
+echo $a
+adb push "$outdir"/boot.img /data/
+adb shell dd if=/data/boot.img of=/dev/bootimg
+adb reboot
+echo "		    ==> [OK]	`date +%Y/%m/%d` `date +%H:%M:%S`"
+}
+#========================================================================
+
+# ================================Main==================================
+chk(){
+if [[ -e $pt ]]
+then
+if [[ $pt != "./mediatek/custom/" ]]
+then
+
+#if [[ $project == *75* ]]
+#then
+#	plat="mt6575"
+#fi
+#if [[ $pt == *77* ]]
+#then
+#	plat="mt6577"
+#fi
+	start=`date +%H:%M:%S`
+echo "=============================================================="
+echo "Build started!"
+echo "=============================================================="
+echo " "
+	mkb
+	pack
+
+if [[ $fl == "1" ]]
+then
+echo " "
+echo "=============================================================="
+echo "Build failed!"
+echo "=============================================================="
+echo " "
+else
+echo " "
+echo "=============================================================="
+echo "Build done succesfully!"
+echo "=============================================================="
+echo " "
+fi
+	end=`date +%H:%M:%S`
+	echo "Start: $start"
+	echo "End: $end"
+	echo " "
+else
+	usage
+fi
+else
+	usage
+fi
+}
+
+case "$1" in
+	n)
+		bflg="$1"
+		project="$2"
+		bldout=$curdir/out/target/product/$project/obj/KERNEL_OBJ/arch/arm/boot
+		pt=$mediatek/custom/$2
+		chk
+	;;
+	r)
+		bflg="$1"
+		project="$2"
+		bldout=$curdir/out/target/product/$project/obj/KERNEL_OBJ/arch/arm/boot
+		pt=$mediatek/custom/$2
+		chk
+	;;
+	c)
+		project="$2"
+		pt=$mediatek/custom/$2
+		if [[ -e $pt ]]
+		then
+		if [[ $pt != "./mediatek/custom/" ]]
+		then
+			clean
+		else
+			usage
+		fi
+		else
+			usage
+		fi
+	;;
+	p)
+		project="$2"
+		bldout=$curdir/out/target/product/$project/obj/KERNEL_OBJ/arch/arm/boot
+		pt=$mediatek/custom/$2
+		if [[ -e $pt ]]
+		then
+		if [[ $pt != "./mediatek/custom/" ]]
+		then
+			pack
+		else
+			usage
+		fi
+		else
+			usage
+		fi
+	;;
+	f)
+		flash
+	;;
+	*)
+		usage
+	;;	
+esac
+#========================================================================
